@@ -31,7 +31,7 @@
   .player-card { flex:1; min-width:140px; background:#16213e; border-radius:12px; padding:10px; text-align:center; border:2px solid transparent; transition:all 0.2s; }
   .player-card.active { border-color:#4fc3f7; background:#1f2f4f; }
   .player-card .name { font-size:0.9em; color:#aaa; margin-bottom:4px; }
-  .player-card .score { font-size:2.4em; font-weight:bold; color:#4fc3f7; }
+  .player-card .score { font-size:2.4em; font-weight:bold; color:#4fc3f7; transition:color 0.3s; }
   .player-card .hint { font-size:0.8em; color:#ffb74d; min-height:1.1em; margin-top:4px; }
   .player-card .cricket-grid { font-size:0.75em; color:#bbb; text-align:left; margin-top:4px; line-height:1.3; }
   .darts-bar { display:flex; gap:6px; justify-content:center; margin-bottom:8px; }
@@ -390,6 +390,57 @@ function renderDartsBar(){
   }
   const sum = turnDarts.reduce((s,d)=>s+d.value,0);
   document.getElementById('dartsSum').textContent = turnDarts.length === 0 ? '' : `Summe: ${sum} Punkte`;
+
+  // NEU: Live-Update der Spielerkarten, wenn noch Darts in der aktuellen Aufnahme liegen
+  if (turnDarts.length > 0 && state.mode === 'x01' && !state.gameOver) {
+    updateLiveCheckout();
+  } else {
+    // Wenn keine Darts geworfen wurden, ganz normales Rendering (z.B. nach Aufnahme-Ende)
+    render();
+  }
+}
+
+// Neue Hilfsfunktion: Berechnet den voraussichtlichen Rest und aktualisiert die Anzeige
+function updateLiveCheckout() {
+  const container = document.getElementById('playersScores');
+  if(!container) return;
+  
+  state.players.forEach((p, idx) => {
+    if(idx === state.currentPlayer) {
+      // Berechne den vorläufigen Rest nach den aktuellen Darts
+      let liveScore = p.score;
+      let liveBust = false;
+      for(const d of turnDarts) {
+        liveScore -= d.value;
+        if(liveScore < 0 || (liveScore === 1 && state.finishMode !== 'straight')) { liveBust = true; break; }
+      }
+      
+      const card = container.children[idx];
+      if(card) {
+        const scoreEl = card.querySelector('.score');
+        const hintEl = card.querySelector('.hint');
+        
+        if(scoreEl) {
+          if(liveBust) {
+            scoreEl.textContent = p.score + ' (Bust)';
+            scoreEl.style.color = '#ffcdd2';
+          } else {
+            scoreEl.textContent = liveScore;
+            scoreEl.style.color = '#4fc3f7';
+          }
+        }
+        
+        if(hintEl) {
+          if(liveBust || liveScore < 2 || liveScore > 170) {
+            hintEl.textContent = liveBust ? 'Bust-Wurf' : '';
+          } else {
+            const hint = getCheckout(liveScore, state.finishMode);
+            hintEl.textContent = hint ? '✓ ' + hint.map(d => d.label).join(' + ') : '';
+          }
+        }
+      }
+    }
+  });
 }
 
 function render(){
@@ -398,9 +449,40 @@ function render(){
     const card = document.createElement('div');
     card.className = 'player-card' + (idx === state.currentPlayer && !state.gameOver ? ' active' : '');
     if(state.mode === 'x01'){
-      const hint = getCheckout(p.score, state.finishMode);
-      const hintText = hint ? '✓ ' + hint.map(d => d.label).join(' + ') : '';
-      card.innerHTML = `<div class="name">${p.name}${idx===state.currentPlayer&&!state.gameOver?' ▶':''}</div><div class="score">${p.score}</div><div class="hint">${hintText}</div>`;
+      let displayScore = p.score;
+      let hintText = '';
+      
+      // Wenn es der aktive Spieler ist und Darts geworfen wurden, berechne Live-Wert
+      if (idx === state.currentPlayer && turnDarts.length > 0 && !state.gameOver) {
+        let liveScore = p.score;
+        let liveBust = false;
+        for(const d of turnDarts) {
+          liveScore -= d.value;
+          if(liveScore < 0 || (liveScore === 1 && state.finishMode !== 'straight')) { liveBust = true; break; }
+        }
+        if(liveBust) {
+          displayScore = p.score + ' (Bust)';
+          hintText = 'Bust-Wurf';
+        } else {
+          displayScore = liveScore;
+          if(liveScore >= 2 && liveScore <= 170) {
+            const hint = getCheckout(liveScore, state.finishMode);
+            hintText = hint ? '✓ ' + hint.map(d => d.label).join(' + ') : '';
+          }
+        }
+      } else {
+        // Normaler Checkout-Hinweis für alle anderen (oder wenn keine Darts in der Aufnahme liegen)
+        const hint = getCheckout(p.score, state.finishMode);
+        hintText = hint ? '✓ ' + hint.map(d => d.label).join(' + ') : '';
+      }
+
+      const isBust = typeof displayScore === 'string' && displayScore.includes('(Bust)');
+      
+      card.innerHTML = `
+        <div class="name">${p.name}${idx===state.currentPlayer&&!state.gameOver?' ▶':''}</div>
+        <div class="score" style="color:${isBust ? '#ffcdd2' : '#4fc3f7'}">${displayScore}</div>
+        <div class="hint" style="color:${isBust ? '#ffcdd2' : '#ffb74d'}">${hintText}</div>
+      `;
     } else {
       let grid = '';
       CRICKET_TARGETS.forEach(t => {
