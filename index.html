@@ -27,13 +27,16 @@
   .player-row { display:flex; align-items:center; gap:8px; background:#16213e; padding:8px; border-radius:8px; margin:5px 0; }
   .player-row input { flex:1; padding:8px; border-radius:6px; border:1px solid #333; background:#0f1626; color:#eee; }
   .remove-btn { background:#c62828; border:none; padding:8px 12px; border-radius:6px; color:#fff; }
+  
   .players-scores { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
   .player-card { flex:1; min-width:140px; background:#16213e; border-radius:12px; padding:10px; text-align:center; border:2px solid transparent; transition:all 0.2s; }
   .player-card.active { border-color:#4fc3f7; background:#1f2f4f; }
-  .player-card .name { font-size:0.9em; color:#aaa; margin-bottom:4px; }
+  .player-card .name { font-size:0.9em; color:#aaa; margin-bottom:4px; display:flex; justify-content:center; align-items:center; gap:4px; }
+  .player-card .match-score { font-size:0.8em; color:#4caf50; font-weight:bold; margin-bottom:4px; min-height:1em; }
   .player-card .score { font-size:2.4em; font-weight:bold; color:#4fc3f7; transition:color 0.3s; }
   .player-card .hint { font-size:0.8em; color:#ffb74d; min-height:1.1em; margin-top:4px; }
   .player-card .cricket-grid { font-size:0.75em; color:#bbb; text-align:left; margin-top:4px; line-height:1.3; }
+  
   .darts-bar { display:flex; gap:6px; justify-content:center; margin-bottom:8px; }
   .dart-slot { flex:1; max-width:90px; height:56px; border-radius:8px; background:#0f1626; border:2px dashed #333; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:bold; }
   .dart-slot.filled { border-style:solid; border-color:#4fc3f7; background:#1f2f4f; color:#4fc3f7; }
@@ -43,6 +46,7 @@
   .dart-slot.current .slot-label { color:#ffb74d; }
   .dart-slot .slot-value { font-size:1.1em; }
   .darts-sum { text-align:center; font-size:1.1em; color:#4fc3f7; font-weight:bold; margin-bottom:10px; min-height:1.4em; }
+  
   .input-area { background:#16213e; border-radius:12px; padding:12px; }
   .score-display { width:100%; font-size:1.3em; text-align:center; padding:10px; border-radius:8px; background:#0f1626; color:#fff; margin-bottom:10px; border:2px solid #4fc3f7; }
   .modifier-row { display:flex; gap:8px; margin-bottom:8px; }
@@ -52,44 +56,84 @@
   #btnDouble { background:#ff9800; color:#000; }
   #btnTriple { background:#e91e63; color:#fff; }
   #btnBull { background:#7e57c2; color:#fff; }
+  
   .numpad { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:8px; }
   .numpad button { padding:14px 0; font-size:1.1em; font-weight:bold; border-radius:8px; border:none; background:#37474f; color:#fff; }
   .numpad button:active { background:#4fc3f7; color:#000; }
   .numpad button.miss { background:#616161; }
   .numpad button.wide { grid-column:span 2; background:#455a64; }
+  
   .action-row { display:flex; gap:8px; }
   .action-row button { flex:1; padding:16px; font-size:1.1em; font-weight:bold; border-radius:8px; border:none; }
   #btnSubmit { background:#4caf50; color:#fff; }
   #btnClear { background:#ff9800; color:#000; }
   #btnUndo { background:#c62828; color:#fff; font-size:0.9em; }
+  
   .status { text-align:center; padding:8px; font-size:1.05em; margin-top:8px; border-radius:8px; }
   .status.bust { background:#b71c1c; color:#ffcdd2; }
   .status.info { background:#1a3a5a; color:#a5d6f7; }
   .status.win { background:#4caf50; color:#fff; font-weight:bold; }
+  
   .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:6px; flex-wrap:wrap; }
   .top-bar button { font-size:0.85em; padding:8px 10px; }
+  
   .winner-banner { background:linear-gradient(135deg,#4caf50,#2e7d32); padding:20px; border-radius:12px; text-align:center; margin-bottom:12px; font-size:1.3em; font-weight:bold; }
+  
   .stats-table { width:100%; border-collapse:collapse; font-size:0.85em; margin-top:8px; }
   .stats-table th, .stats-table td { padding:6px 4px; border-bottom:1px solid #2a3550; text-align:center; }
   .stats-table th { color:#4fc3f7; }
   .stats-table td:first-child, .stats-table th:first-child { text-align:left; color:#ddd; }
   h2 { font-size:1.1em; color:#4fc3f7; margin:16px 0 6px; }
   .voice-toggle { display:flex; align-items:center; gap:8px; justify-content:center; margin-top:8px; font-size:0.85em; color:#aaa; }
+
+  /* Easter Egg Bild */
+  .setup-avatar {
+    display: flex;
+    align-items: center;
+    background: #16213e;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 15px;
+    gap: 12px;
+    border: 1px solid #333;
+  }
+  .setup-avatar img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    border: 2px solid #ffb74d;
+  }
+  .setup-avatar .text {
+    font-size: 0.9em;
+    color: #ffb74d;
+    font-weight: bold;
+    line-height: 1.2;
+  }
 </style>
 </head>
 <body>
 <div class="screen">
   <div id="setupScreen">
     <h1>🎯 Dart Counter</h1>
+    
+    <!-- Das Bild als Easter Egg -->
+    <div class="setup-avatar">
+      <img src="./mann.png" alt="Nächster Halt EHE">
+      <div class="text">Nächster Halt:<br>EHE 🎯</div>
+    </div>
+
     <div class="setup">
       <div class="row">
         <label>Spielart:
-          <select id="gameMode">
+          <select id="gameMode" onchange="toggleSetupFields()">
             <option value="501">501</option>
             <option value="301">301</option>
             <option value="701">701</option>
             <option value="101">101</option>
             <option value="cricket">Cricket</option>
+            <option value="schanghai">Schanghai</option>
           </select>
         </label>
         <label>Finish (X01):
@@ -100,6 +144,27 @@
           </select>
         </label>
       </div>
+      
+      <!-- Turniermodus Einstellungen (nur bei X01) -->
+      <div class="row" id="tournamentSettings">
+        <label>Legs pro Set (Best of):
+          <select id="legsPerSet">
+            <option value="1">1 (Einzelnes Leg)</option>
+            <option value="3" selected>3</option>
+            <option value="5">5</option>
+            <option value="7">7</option>
+          </select>
+        </label>
+        <label>Sets pro Match (Best of):
+          <select id="setsPerMatch">
+            <option value="1" selected>1 (Kein Set-Modus)</option>
+            <option value="3">3</option>
+            <option value="5">5</option>
+            <option value="7">7</option>
+          </select>
+        </label>
+      </div>
+
       <div class="player-list" id="playerList"></div>
       <button onclick="addPlayerInput()" style="width:100%; margin-bottom:10px;">+ Spieler hinzufügen</button>
       <label class="voice-toggle"><input type="checkbox" id="voiceToggle" checked> 🔊 Sprachausgabe der Wurf-Summe</label>
@@ -150,7 +215,22 @@
 
 <script>
 const CRICKET_TARGETS = [20,19,18,17,16,15,25];
-let state = { mode:'x01', players:[], currentPlayer:0, startScore:501, finishMode:'double', gameOver:false, history:[], stats:[], voiceOn:true };
+let state = { 
+  mode:'x01', 
+  players:[], 
+  currentPlayer:0, 
+  startScore:501, 
+  finishMode:'double', 
+  gameOver:false, 
+  history:[], 
+  stats:[], 
+  voiceOn:true,
+  legsPerSet: 3,
+  setsPerMatch: 1,
+  currentLeg: 1,
+  currentSet: 1,
+  shanghaiRound: 1
+};
 let current = { multiplier: 1, base: null };
 let turnDarts = [];
 
@@ -162,26 +242,67 @@ function addPlayerInput(name='') {
 }
 addPlayerInput('Spieler 1'); addPlayerInput('Spieler 2');
 
+function toggleSetupFields() {
+  const mode = document.getElementById('gameMode').value;
+  const tSettings = document.getElementById('tournamentSettings');
+  if (mode === 'cricket' || mode === 'schanghai') {
+    tSettings.classList.add('hidden');
+  } else {
+    tSettings.classList.remove('hidden');
+  }
+}
+
 function startGame() {
   const names = [];
   document.querySelectorAll('#playerList input').forEach(inp => { const n = inp.value.trim(); if (n) names.push(n); });
   if (names.length < 1) { alert('Bitte mindestens 1 Spieler eingeben!'); return; }
+  
   const modeSel = document.getElementById('gameMode').value;
-  state.mode = modeSel === 'cricket' ? 'cricket' : 'x01';
+  state.mode = (modeSel === 'cricket' || modeSel === 'schanghai') ? modeSel : 'x01';
   state.startScore = state.mode === 'x01' ? parseInt(modeSel) : 0;
   state.finishMode = document.getElementById('finishMode').value;
   state.voiceOn = document.getElementById('voiceToggle').checked;
-  state.players = names.map(n => ({ name:n, score: state.mode==='x01'?state.startScore:0, cricket: state.mode==='cricket'?mkCricket():null }));
-  state.currentPlayer = 0; state.gameOver = false; state.history = [];
+  
+  state.legsPerSet = parseInt(document.getElementById('legsPerSet').value);
+  state.setsPerMatch = parseInt(document.getElementById('setsPerMatch').value);
+  
+  state.players = names.map(n => ({ 
+    name:n, 
+    score: state.mode==='x01'?state.startScore:0, 
+    cricket: state.mode==='cricket'?mkCricket():null,
+    legs: 0,
+    sets: 0,
+    shanghaiPoints: 0
+  }));
+  
+  state.currentPlayer = 0; 
+  state.gameOver = false; 
+  state.history = [];
   state.stats = names.map(() => mkStats());
+  state.currentLeg = 1;
+  state.currentSet = 1;
+  state.shanghaiRound = 1;
+  
   turnDarts = []; current = { multiplier:1, base:null };
-  document.getElementById('modeLabel').textContent = state.mode==='cricket'?'Cricket':state.startScore+' • '+(state.finishMode==='double'?'Double Out':state.finishMode==='triple'?'Triple Out':'Straight Out');
+  
+  let modeText = '';
+  if (state.mode === 'cricket') modeText = 'Cricket';
+  else if (state.mode === 'schanghai') modeText = 'Schanghai';
+  else {
+    modeText = state.startScore + ' • ' + (state.finishMode==='double'?'Double Out':state.finishMode==='triple'?'Triple Out':'Straight Out');
+    if (state.setsPerMatch > 1 || state.legsPerSet > 1) {
+      modeText += ` (Best of ${state.legsPerSet} Legs / ${state.setsPerMatch} Sets)`;
+    }
+  }
+  
+  document.getElementById('modeLabel').textContent = modeText;
   document.getElementById('setupScreen').classList.add('hidden');
   document.getElementById('gameScreen').classList.remove('hidden');
   document.getElementById('winnerBanner').classList.add('hidden');
   document.getElementById('statsPanel').classList.add('hidden');
   buildNumpad(); setMult(1); render();
 }
+
 function mkCricket(){ const c={}; CRICKET_TARGETS.forEach(t=>c[t]=0); return c; }
 function mkStats(){ return { darts:0, points:0, turns:0, best:0, checkouts:0, busts:0, highFinish:0, tons:0 }; }
 function confirmNewGame(){ if (confirm('Neues Spiel starten?')){ document.getElementById('gameScreen').classList.add('hidden'); document.getElementById('setupScreen').classList.remove('hidden'); } }
@@ -228,7 +349,11 @@ function setBull(){
 
 function updateDisplay(){
   const disp = document.getElementById('scoreDisplay');
-  disp.textContent = `Nächster Wurf: ${current.multiplier===3?'Triple':current.multiplier===2?'Double':'Einfach'} – Zahl tippen`;
+  if (state.mode === 'schanghai') {
+    disp.textContent = `Runde ${state.shanghaiRound}: Ziel ist die ${state.shanghaiRound} – Zahl tippen`;
+  } else {
+    disp.textContent = `Nächster Wurf: ${current.multiplier===3?'Triple':current.multiplier===2?'Double':'Einfach'} – Zahl tippen`;
+  }
 }
 
 function commitDart(d){
@@ -262,7 +387,11 @@ function submitTurn(){
   state.history.push({
     players: state.players.map(p=>({...p, cricket:p.cricket?{...p.cricket}:null})),
     stats: state.stats.map(s=>({...s})),
-    currentPlayer: state.currentPlayer
+    currentPlayer: state.currentPlayer,
+    currentLeg: state.currentLeg,
+    currentSet: state.currentSet,
+    shanghaiRound: state.shanghaiRound,
+    gameOver: state.gameOver
   });
 
   const turnSum = turnDarts.reduce((s,d)=>s+d.value,0);
@@ -273,7 +402,8 @@ function submitTurn(){
   speak(String(turnSum));
 
   if(state.mode === 'x01') processX01Turn(player, stat, turnSum);
-  else processCricketTurn(player, stat);
+  else if(state.mode === 'cricket') processCricketTurn(player, stat);
+  else if(state.mode === 'schanghai') processSchanghaiTurn(player, stat);
 }
 
 function processX01Turn(player, stat, turnSum){
@@ -286,15 +416,56 @@ function processX01Turn(player, stat, turnSum){
     if(ns === 0){
       if(state.finishMode==='double' && !d.isDouble){ bust = true; break; }
       if(state.finishMode==='triple' && !d.isTriple){ bust = true; break; }
-      player.score = 0; state.gameOver = true; stat.checkouts++;
+      
+      // LEG GEWONNEN!
+      player.score = 0; 
+      stat.checkouts++;
       if(turnSum > stat.highFinish) stat.highFinish = turnSum;
-      showWinner(player.name); resetTurn(); render(); return;
+      
+      handleLegWin();
+      return;
     }
     running = ns;
   }
   if(bust){ stat.busts++; showStatus(`BUST! ${player.name} bleibt bei ${player.score}`,'bust'); }
   else { player.score = running; showStatus(`${player.name}: −${turnSum} → ${player.score}`,'info'); }
   advancePlayer(); resetTurn(); render();
+}
+
+function handleLegWin() {
+  const player = state.players[state.currentPlayer];
+  player.legs++;
+  
+  let matchWon = false;
+  let setWon = false;
+  
+  // Prüfen ob Set gewonnen
+  const legsToWinSet = Math.ceil(state.legsPerSet / 2);
+  if (player.legs >= legsToWinSet) {
+    setWon = true;
+    player.sets++;
+    player.legs = 0; // Legs für dieses Set zurücksetzen
+    
+    // Prüfen ob Match gewonnen
+    const setsToWinMatch = Math.ceil(state.setsPerMatch / 2);
+    if (player.sets >= setsToWinMatch) {
+      matchWon = true;
+    }
+  }
+  
+  if (matchWon) {
+    state.gameOver = true;
+    showWinner(`${player.name} gewinnt das Match!`);
+    resetTurn(); render(); return;
+  }
+  
+  // Neues Leg starten
+  state.players.forEach(p => p.score = state.startScore);
+  // Spieler, der das Leg verloren hat, fängt an (oder der andere, je nach Regel. Wir machen: Verlierer fängt an)
+  state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
+  
+  showStatus(`🏆 ${player.name} gewinnt das Leg! ${setWon ? '(SET GEWONNEN)' : ''} Neues Leg startet...`, 'win');
+  resetTurn(); render();
 }
 
 function processCricketTurn(player, stat){
@@ -321,6 +492,48 @@ function processCricketTurn(player, stat){
   advancePlayer(); resetTurn(); render();
 }
 
+function processSchanghaiTurn(player, stat) {
+  let pointsThisTurn = 0;
+  let targetNumber = state.shanghaiRound; // 1 bis 20
+  
+  // Wertung für Schanghai
+  turnDarts.forEach(d => {
+    if (d.miss) return;
+    if (d.base === targetNumber) {
+      // Einfach = 1 Punkt, Double = 2, Triple = 3
+      let pts = d.mult; 
+      // Sonderregel: Manche spielen Schanghai mit normalen Punkten (z.B. Triple 20 = 60). 
+      // Hier nutzen wir die klassische Variante: Jeder Treffer zählt nach Multiplikator.
+      player.shanghaiPoints += pts;
+      pointsThisTurn += pts;
+    }
+  });
+
+  showStatus(`${player.name}: +${pointsThisTurn} Punkte in Runde ${targetNumber}`, 'info');
+
+  // Nächster Spieler
+  state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
+  
+  // Wenn wieder alle Spieler dran waren, nächste Runde
+  if (state.currentPlayer === 0) {
+    state.shanghaiRound++;
+    if (state.shanghaiRound > 20) {
+      // Spiel vorbei
+      state.gameOver = true;
+      const maxPoints = Math.max(...state.players.map(p => p.shanghaiPoints));
+      const winners = state.players.filter(p => p.shanghaiPoints === maxPoints);
+      if (winners.length > 1) {
+        showWinner(`Unentschieden! (${winners.map(w=>w.name).join(', ')} mit ${maxPoints} Pkt.)`);
+      } else {
+        showWinner(`${winners[0].name} gewinnt Schanghai!`);
+      }
+      resetTurn(); render(); return;
+    }
+  }
+  
+  resetTurn(); render();
+}
+
 function allOthersClosed(idx, target){ return state.players.every((p,i)=>i===idx || p.cricket[target] >= 3); }
 function advancePlayer(){ state.currentPlayer = (state.currentPlayer + 1) % state.players.length; }
 function resetTurn(){ turnDarts = []; current = { multiplier:1, base:null }; setMult(1); renderDartsBar(); }
@@ -329,7 +542,12 @@ function undo(){
   if(state.history.length === 0){ alert('Nichts zum Rückgängigmachen'); return; }
   const prev = state.history.pop();
   state.players = prev.players; state.stats = prev.stats;
-  state.currentPlayer = prev.currentPlayer; state.gameOver = false;
+  state.currentPlayer = prev.currentPlayer; 
+  state.currentLeg = prev.currentLeg;
+  state.currentSet = prev.currentSet;
+  state.shanghaiRound = prev.shanghaiRound;
+  state.gameOver = prev.gameOver;
+  
   document.getElementById('winnerBanner').classList.add('hidden');
   document.getElementById('inputArea').classList.remove('hidden');
   document.getElementById('statusMsg').classList.add('hidden');
@@ -390,57 +608,6 @@ function renderDartsBar(){
   }
   const sum = turnDarts.reduce((s,d)=>s+d.value,0);
   document.getElementById('dartsSum').textContent = turnDarts.length === 0 ? '' : `Summe: ${sum} Punkte`;
-
-  // NEU: Live-Update der Spielerkarten, wenn noch Darts in der aktuellen Aufnahme liegen
-  if (turnDarts.length > 0 && state.mode === 'x01' && !state.gameOver) {
-    updateLiveCheckout();
-  } else {
-    // Wenn keine Darts geworfen wurden, ganz normales Rendering (z.B. nach Aufnahme-Ende)
-    render();
-  }
-}
-
-// Neue Hilfsfunktion: Berechnet den voraussichtlichen Rest und aktualisiert die Anzeige
-function updateLiveCheckout() {
-  const container = document.getElementById('playersScores');
-  if(!container) return;
-  
-  state.players.forEach((p, idx) => {
-    if(idx === state.currentPlayer) {
-      // Berechne den vorläufigen Rest nach den aktuellen Darts
-      let liveScore = p.score;
-      let liveBust = false;
-      for(const d of turnDarts) {
-        liveScore -= d.value;
-        if(liveScore < 0 || (liveScore === 1 && state.finishMode !== 'straight')) { liveBust = true; break; }
-      }
-      
-      const card = container.children[idx];
-      if(card) {
-        const scoreEl = card.querySelector('.score');
-        const hintEl = card.querySelector('.hint');
-        
-        if(scoreEl) {
-          if(liveBust) {
-            scoreEl.textContent = p.score + ' (Bust)';
-            scoreEl.style.color = '#ffcdd2';
-          } else {
-            scoreEl.textContent = liveScore;
-            scoreEl.style.color = '#4fc3f7';
-          }
-        }
-        
-        if(hintEl) {
-          if(liveBust || liveScore < 2 || liveScore > 170) {
-            hintEl.textContent = liveBust ? 'Bust-Wurf' : '';
-          } else {
-            const hint = getCheckout(liveScore, state.finishMode);
-            hintEl.textContent = hint ? '✓ ' + hint.map(d => d.label).join(' + ') : '';
-          }
-        }
-      }
-    }
-  });
 }
 
 function render(){
@@ -448,11 +615,17 @@ function render(){
   state.players.forEach((p, idx) => {
     const card = document.createElement('div');
     card.className = 'player-card' + (idx === state.currentPlayer && !state.gameOver ? ' active' : '');
+    
+    // Match-Score (Legs/Sets) anzeigen, wenn Turniermodus aktiv
+    let matchScoreText = '';
+    if (state.mode === 'x01' && (state.legsPerSet > 1 || state.setsPerMatch > 1)) {
+      matchScoreText = `<div class="match-score">L: ${p.legs} | S: ${p.sets}</div>`;
+    }
+
     if(state.mode === 'x01'){
       let displayScore = p.score;
       let hintText = '';
       
-      // Wenn es der aktive Spieler ist und Darts geworfen wurden, berechne Live-Wert
       if (idx === state.currentPlayer && turnDarts.length > 0 && !state.gameOver) {
         let liveScore = p.score;
         let liveBust = false;
@@ -471,7 +644,6 @@ function render(){
           }
         }
       } else {
-        // Normaler Checkout-Hinweis für alle anderen (oder wenn keine Darts in der Aufnahme liegen)
         const hint = getCheckout(p.score, state.finishMode);
         hintText = hint ? '✓ ' + hint.map(d => d.label).join(' + ') : '';
       }
@@ -480,10 +652,11 @@ function render(){
       
       card.innerHTML = `
         <div class="name">${p.name}${idx===state.currentPlayer&&!state.gameOver?' ▶':''}</div>
+        ${matchScoreText}
         <div class="score" style="color:${isBust ? '#ffcdd2' : '#4fc3f7'}">${displayScore}</div>
         <div class="hint" style="color:${isBust ? '#ffcdd2' : '#ffb74d'}">${hintText}</div>
       `;
-    } else {
+    } else if (state.mode === 'cricket') {
       let grid = '';
       CRICKET_TARGETS.forEach(t => {
         const m = p.cricket[t];
@@ -491,18 +664,37 @@ function render(){
         grid += `<div>${t===25?'Bull':t}: <b style="color:${m>=3?'#4fc3f7':'#fff'}">${ms||'–'}</b></div>`;
       });
       card.innerHTML = `<div class="name">${p.name}${idx===state.currentPlayer&&!state.gameOver?' ▶':''}</div><div class="score">${p.score}</div><div class="cricket-grid">${grid}</div>`;
+    } else if (state.mode === 'schanghai') {
+      card.innerHTML = `
+        <div class="name">${p.name}${idx===state.currentPlayer&&!state.gameOver?' ▶':''}</div>
+        <div class="score">${p.shanghaiPoints}</div>
+        <div class="hint">Punkte</div>
+      `;
     }
     container.appendChild(card);
   });
-  renderDartsBar(); updateDisplay();
+  
+  // Live-Checkout Update triggern
+  if (turnDarts.length > 0 && state.mode === 'x01' && !state.gameOver) {
+    // Das eigentliche Rendern passiert schon oben, aber wir wollen den Live-Wert.
+    // Um Doppel-Render zu vermeiden, machen wir das hier direkt im Render.
+  } else {
+    // Nichts tun, render() hat schon alles gezeichnet
+  }
+
+  renderDartsBar(); 
+  if (state.mode !== 'schanghai') updateDisplay();
+  else {
+     document.getElementById('scoreDisplay').textContent = `Runde ${state.shanghaiRound}: Ziel ist die ${state.shanghaiRound} – Zahl tippen`;
+  }
 }
 
 function showStatus(msg, cls){
   const el = document.getElementById('statusMsg'); el.textContent = msg; el.className = 'status ' + cls;
-  el.classList.remove('hidden'); clearTimeout(el._t); el._t = setTimeout(()=>el.classList.add('hidden'), 2800);
+  el.classList.remove('hidden'); clearTimeout(el._t); el._t = setTimeout(()=>el.classList.add('hidden'), 3500);
 }
 function showWinner(name){
-  document.getElementById('winnerBanner').textContent = `🏆 ${name} GEWINNT! 🏆`;
+  document.getElementById('winnerBanner').textContent = `🏆 ${name} 🏆`;
   document.getElementById('winnerBanner').classList.remove('hidden');
   document.getElementById('inputArea').classList.add('hidden');
 }
