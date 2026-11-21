@@ -111,9 +111,45 @@
     font-weight: bold;
     line-height: 1.2;
   }
+
+  /* --- BULL ANIMATION --- */
+  #bullOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    pointer-events: none;
+  }
+  
+  .spinning-newspaper {
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    border: 6px solid #ffb74d;
+    box-shadow: 0 0 30px rgba(255, 183, 77, 0.8);
+    object-fit: cover;
+    object-position: top;
+    animation: spinAndStop 2s ease-out forwards;
+  }
+
+  @keyframes spinAndStop {
+    0% { transform: rotate(0deg) scale(1); opacity: 0; }
+    10% { opacity: 1; }
+    80% { transform: rotate(1080deg) scale(1.1); opacity: 1; } /* 3 Umdrehungen */
+    100% { transform: rotate(1080deg) scale(1.1); opacity: 1; } /* Stehen bleiben */
+  }
 </style>
 </head>
 <body>
+
+<!-- BULL Overlay -->
+<div id="bullOverlay" class="hidden">
+  <img src="./mann.png" class="spinning-newspaper" alt="BULL!">
+</div>
+
 <div class="screen">
   <div id="setupScreen">
     <h1>🎯 Dart Counter</h1>
@@ -345,6 +381,25 @@ function setBull(){
   const mult = current.multiplier === 2 ? 2 : 1;
   const dart = { base: 25, mult: mult, value: 25*mult, isDouble: mult===2, isTriple: false, miss: false };
   commitDart(dart);
+  triggerBullAnimation(); // <--- HIER WIRD DIE ANIMATION AUSGELÖST
+}
+
+function triggerBullAnimation() {
+  const overlay = document.getElementById('bullOverlay');
+  const img = overlay.querySelector('.spinning-newspaper');
+  
+  // Overlay anzeigen
+  overlay.classList.remove('hidden');
+  
+  // Animation zurücksetzen (falls sie schon lief)
+  img.style.animation = 'none';
+  img.offsetHeight; /* trigger reflow */
+  img.style.animation = null;
+  
+  // Nach 3 Sekunden ausblenden (2s Animation + 1s Standbild)
+  setTimeout(() => {
+    overlay.classList.add('hidden');
+  }, 3000);
 }
 
 function updateDisplay(){
@@ -417,7 +472,6 @@ function processX01Turn(player, stat, turnSum){
       if(state.finishMode==='double' && !d.isDouble){ bust = true; break; }
       if(state.finishMode==='triple' && !d.isTriple){ bust = true; break; }
       
-      // LEG GEWONNEN!
       player.score = 0; 
       stat.checkouts++;
       if(turnSum > stat.highFinish) stat.highFinish = turnSum;
@@ -439,14 +493,12 @@ function handleLegWin() {
   let matchWon = false;
   let setWon = false;
   
-  // Prüfen ob Set gewonnen
   const legsToWinSet = Math.ceil(state.legsPerSet / 2);
   if (player.legs >= legsToWinSet) {
     setWon = true;
     player.sets++;
-    player.legs = 0; // Legs für dieses Set zurücksetzen
+    player.legs = 0; 
     
-    // Prüfen ob Match gewonnen
     const setsToWinMatch = Math.ceil(state.setsPerMatch / 2);
     if (player.sets >= setsToWinMatch) {
       matchWon = true;
@@ -459,9 +511,7 @@ function handleLegWin() {
     resetTurn(); render(); return;
   }
   
-  // Neues Leg starten
   state.players.forEach(p => p.score = state.startScore);
-  // Spieler, der das Leg verloren hat, fängt an (oder der andere, je nach Regel. Wir machen: Verlierer fängt an)
   state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
   
   showStatus(`🏆 ${player.name} gewinnt das Leg! ${setWon ? '(SET GEWONNEN)' : ''} Neues Leg startet...`, 'win');
@@ -494,16 +544,12 @@ function processCricketTurn(player, stat){
 
 function processSchanghaiTurn(player, stat) {
   let pointsThisTurn = 0;
-  let targetNumber = state.shanghaiRound; // 1 bis 20
+  let targetNumber = state.shanghaiRound; 
   
-  // Wertung für Schanghai
   turnDarts.forEach(d => {
     if (d.miss) return;
     if (d.base === targetNumber) {
-      // Einfach = 1 Punkt, Double = 2, Triple = 3
       let pts = d.mult; 
-      // Sonderregel: Manche spielen Schanghai mit normalen Punkten (z.B. Triple 20 = 60). 
-      // Hier nutzen wir die klassische Variante: Jeder Treffer zählt nach Multiplikator.
       player.shanghaiPoints += pts;
       pointsThisTurn += pts;
     }
@@ -511,14 +557,11 @@ function processSchanghaiTurn(player, stat) {
 
   showStatus(`${player.name}: +${pointsThisTurn} Punkte in Runde ${targetNumber}`, 'info');
 
-  // Nächster Spieler
   state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
   
-  // Wenn wieder alle Spieler dran waren, nächste Runde
   if (state.currentPlayer === 0) {
     state.shanghaiRound++;
     if (state.shanghaiRound > 20) {
-      // Spiel vorbei
       state.gameOver = true;
       const maxPoints = Math.max(...state.players.map(p => p.shanghaiPoints));
       const winners = state.players.filter(p => p.shanghaiPoints === maxPoints);
@@ -616,7 +659,6 @@ function render(){
     const card = document.createElement('div');
     card.className = 'player-card' + (idx === state.currentPlayer && !state.gameOver ? ' active' : '');
     
-    // Match-Score (Legs/Sets) anzeigen, wenn Turniermodus aktiv
     let matchScoreText = '';
     if (state.mode === 'x01' && (state.legsPerSet > 1 || state.setsPerMatch > 1)) {
       matchScoreText = `<div class="match-score">L: ${p.legs} | S: ${p.sets}</div>`;
@@ -673,14 +715,6 @@ function render(){
     }
     container.appendChild(card);
   });
-  
-  // Live-Checkout Update triggern
-  if (turnDarts.length > 0 && state.mode === 'x01' && !state.gameOver) {
-    // Das eigentliche Rendern passiert schon oben, aber wir wollen den Live-Wert.
-    // Um Doppel-Render zu vermeiden, machen wir das hier direkt im Render.
-  } else {
-    // Nichts tun, render() hat schon alles gezeichnet
-  }
 
   renderDartsBar(); 
   if (state.mode !== 'schanghai') updateDisplay();
