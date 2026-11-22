@@ -210,7 +210,7 @@
 <div class="screen">
   <div id="setupScreen">
     <h1>🎯 Dart Counter</h1>
-    <div class="version-tag">v3.3</div>
+    <div class="version-tag">v3.5</div>
     
     <!-- Das Bild als Easter Egg -->
     <div class="setup-avatar">
@@ -332,6 +332,7 @@ let state = {
   legsPerSet: 1,
   setsPerMatch: 1,
   shanghaiRound: 1,
+  round: 1,
   modeText: ''
 };
 let current = { multiplier: 1, base: null };
@@ -440,6 +441,7 @@ function startGame() {
   state.history = [];
   state.stats = names.map(() => mkStats());
   state.shanghaiRound = 1;
+  state.round = 1;
   
   turnDarts = []; current = { multiplier:1, base:null };
   
@@ -478,6 +480,7 @@ function rematch() {
   state.history = [];
   state.stats = state.players.map(() => mkStats());
   state.shanghaiRound = 1;
+  state.round = 1;
   
   turnDarts = []; current = { multiplier:1, base:null };
   
@@ -692,6 +695,7 @@ function submitTurn(){
     stats: state.stats.map(s=>({...s})),
     currentPlayer: state.currentPlayer,
     shanghaiRound: state.shanghaiRound,
+    round: state.round,
     gameOver: state.gameOver
   });
 
@@ -700,7 +704,12 @@ function submitTurn(){
   stat.best = Math.max(stat.best, turnSum);
   if(turnSum >= 100) stat.tons++;
 
-  speak(String(turnSum));
+  if(state.mode === 'schanghai'){
+    const sp = turnDarts.reduce((s,d)=> s + ((!d.miss && d.base === state.shanghaiRound) ? d.value : 0), 0);
+    speak(String(sp));
+  } else {
+    speak(String(turnSum));
+  }
 
   if(state.mode === 'x01') processX01Turn(player, stat, turnSum);
   else if(state.mode === 'cricket') processCricketTurn(player, stat);
@@ -761,6 +770,7 @@ function handleLegWin() {
   
   state.players.forEach(p => p.score = state.startScore);
   state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
+  state.round = 1;
   
   showStatus(`🏆 ${player.name} gewinnt das Leg! ${setWon ? '(SET GEWONNEN)' : ''} Neues Leg startet...`, 'win');
   resetTurn(); render();
@@ -803,7 +813,7 @@ function processSchanghaiTurn(player, stat) {
   turnDarts.forEach(d => {
     if (d.miss) return;
     if (d.base === targetNumber) {
-      let pts = d.mult; 
+      let pts = d.value; 
       player.shanghaiPoints += pts;
       pointsThisTurn += pts;
     }
@@ -834,7 +844,10 @@ function processSchanghaiTurn(player, stat) {
 }
 
 function allOthersClosed(idx, target){ return state.players.every((p,i)=>i===idx || p.cricket[target] >= 3); }
-function advancePlayer(){ state.currentPlayer = (state.currentPlayer + 1) % state.players.length; }
+function advancePlayer(){
+  state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
+  if(state.currentPlayer === 0) state.round++;
+}
 function resetTurn(){ turnDarts = []; current = { multiplier:1, base:null }; setMult(1); renderDartsBar(); }
 
 function undo(){
@@ -843,6 +856,7 @@ function undo(){
   state.players = prev.players; state.stats = prev.stats;
   state.currentPlayer = prev.currentPlayer; 
   state.shanghaiRound = prev.shanghaiRound;
+  state.round = prev.round;
   state.gameOver = prev.gameOver;
   
   document.getElementById('winnerBanner').classList.add('hidden');
@@ -903,8 +917,10 @@ function renderDartsBar(){
     }
     bar.appendChild(slot);
   }
-  const sum = turnDarts.reduce((s,d)=>s+d.value,0);
-  document.getElementById('dartsSum').textContent = turnDarts.length === 0 ? '' : `Summe: ${sum} Punkte`;
+  const sum = state.mode === 'schanghai'
+    ? turnDarts.reduce((s,d)=> s + ((!d.miss && d.base === state.shanghaiRound) ? d.value : 0), 0)
+    : turnDarts.reduce((s,d)=>s+d.value,0);
+  document.getElementById('dartsSum').textContent = turnDarts.length === 0 ? '' : (state.mode === 'schanghai' ? `Treffer: ${sum} Punkte` : `Summe: ${sum} Punkte`);
 }
 
 function render(){
@@ -975,6 +991,9 @@ function render(){
     const curSet = state.players.reduce((s,p)=>s+p.sets,0) + 1;
     const curLeg = state.players.reduce((s,p)=>s+p.legs,0) + 1;
     label += ` • Set ${curSet}, Leg ${curLeg}`;
+  }
+  if ((state.mode === 'x01' || state.mode === 'cricket') && !state.gameOver) {
+    label += ` • Runde ${state.round}`;
   }
   document.getElementById('modeLabel').textContent = label;
 
