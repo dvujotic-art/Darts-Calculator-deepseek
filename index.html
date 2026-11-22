@@ -413,11 +413,9 @@ function playBullSound() {
     
     const now = audioCtx.currentTime;
     
-    // Tonhöhe schnell nach oben ziehen (Swoosh)
     osc.frequency.setValueAtTime(200, now);
     osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
     
-    // Lautstärke schnell anschwellen und abklingen
     gain.gain.setValueAtTime(0, now);
     gain.gain.linearRampToValueAtTime(0.15, now + 0.05);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
@@ -664,4 +662,3 @@ function renderDartsBar(){
       slot.classList.add('filled');
       const d = turnDarts[i];
       const prefix = d.mult===2?'D':d.mult===3?'T':'';
-      const label = d.miss ? 'MISS
