@@ -77,6 +77,9 @@
   .top-bar button { font-size:0.85em; padding:8px 10px; }
   
   .winner-banner { background:linear-gradient(135deg,#4caf50,#2e7d32); padding:20px; border-radius:12px; text-align:center; margin-bottom:12px; font-size:1.3em; font-weight:bold; }
+  .win-flash { font-size:2.2em; color:#ffeb3b; letter-spacing:2px; text-shadow:0 0 20px rgba(255,235,59,0.9); animation:winBlink 0.6s step-start infinite; margin-bottom:6px; }
+  @keyframes winBlink { 50% { opacity:0; } }
+  .winner-banner button { font-size:0.7em; padding:10px 14px; border:none; border-radius:8px; background:#fff; color:#1a1a2e; font-weight:bold; }
   
   .stats-table { width:100%; border-collapse:collapse; font-size:0.85em; margin-top:8px; }
   .stats-table th, .stats-table td { padding:6px 4px; border-bottom:1px solid #2a3550; text-align:center; }
@@ -156,7 +159,7 @@
     <!-- Das Bild als Easter Egg -->
     <div class="setup-avatar">
       <img src="./mann.png" alt="Nächster Halt EHE">
-      <div class="text">Nächster Halt:<br>DARTS 🎯</div>
+      <div class="text">Nächster Halt:<br>EHE 🎯</div>
     </div>
 
     <div class="setup">
@@ -257,9 +260,8 @@ let state = {
   voiceOn:true,
   legsPerSet: 3,
   setsPerMatch: 1,
-  currentLeg: 1,
-  currentSet: 1,
-  shanghaiRound: 1
+  shanghaiRound: 1,
+  modeText: ''
 };
 let current = { multiplier: 1, base: null };
 let turnDarts = [];
@@ -310,8 +312,6 @@ function startGame() {
   state.gameOver = false; 
   state.history = [];
   state.stats = names.map(() => mkStats());
-  state.currentLeg = 1;
-  state.currentSet = 1;
   state.shanghaiRound = 1;
   
   turnDarts = []; current = { multiplier:1, base:null };
@@ -325,12 +325,37 @@ function startGame() {
       modeText += ` (Best of ${state.legsPerSet} Legs / ${state.setsPerMatch} Sets)`;
     }
   }
+  state.modeText = modeText;
   
   document.getElementById('modeLabel').textContent = modeText;
   document.getElementById('setupScreen').classList.add('hidden');
   document.getElementById('gameScreen').classList.remove('hidden');
   document.getElementById('winnerBanner').classList.add('hidden');
+  document.getElementById('inputArea').classList.remove('hidden');
   document.getElementById('statsPanel').classList.add('hidden');
+  buildNumpad(); setMult(1); render();
+}
+
+function rematch() {
+  state.players.forEach(p => {
+    p.score = state.mode==='x01' ? state.startScore : 0;
+    p.cricket = state.mode==='cricket' ? mkCricket() : null;
+    p.legs = 0;
+    p.sets = 0;
+    p.shanghaiPoints = 0;
+  });
+  state.currentPlayer = 0;
+  state.gameOver = false;
+  state.history = [];
+  state.stats = state.players.map(() => mkStats());
+  state.shanghaiRound = 1;
+  
+  turnDarts = []; current = { multiplier:1, base:null };
+  
+  document.getElementById('winnerBanner').classList.add('hidden');
+  document.getElementById('inputArea').classList.remove('hidden');
+  document.getElementById('statsPanel').classList.add('hidden');
+  document.getElementById('statusMsg').classList.add('hidden');
   buildNumpad(); setMult(1); render();
 }
 
@@ -355,6 +380,7 @@ function buildNumpad() {
 
 function pressNumber(n){
   if(state.gameOver) return;
+  if(n < 1 || n > 20) return;
   const mult = current.multiplier;
   const dart = { base: n, mult: mult, value: n * mult, isDouble: mult === 2, isTriple: mult === 3, miss: false };
   commitDart(dart);
@@ -423,6 +449,54 @@ function playBullSound() {
   } catch(e) { console.log('Audio nicht unterstützt', e); }
 }
 
+// Fanfare + synthetischer Jubel beim Sieg
+function playWinSound() {
+  if (!state.voiceOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const now = audioCtx.currentTime;
+    
+    // Fanfare (aufsteigende Arpeggio-Töne)
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((f, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = f;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      const t = now + i * 0.15;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.2, t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      osc.start(t);
+      osc.stop(t + 0.5);
+    });
+    
+    // Jubel (gefiltertes Rauschen als "Crowd")
+    const dur = 1.5;
+    const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * dur, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 1000;
+    const noiseGain = audioCtx.createGain();
+    noise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(audioCtx.destination);
+    noiseGain.gain.setValueAtTime(0, now);
+    noiseGain.gain.linearRampToValueAtTime(0.12, now + 0.2);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    noise.start(now);
+    noise.stop(now + dur);
+  } catch(e) { console.log('Audio nicht unterstützt', e); }
+}
+
 function updateDisplay(){
   const disp = document.getElementById('scoreDisplay');
   if (state.mode === 'schanghai') {
@@ -432,13 +506,31 @@ function updateDisplay(){
   }
 }
 
+// Prüft in X01, ob die Aufnahme nach dem aktuellen Dart entschieden ist (Checkout oder Bust)
+function isX01TurnDecided(){
+  if(state.mode !== 'x01' || turnDarts.length === 0) return false;
+  let running = state.players[state.currentPlayer].score;
+  for(const d of turnDarts){
+    const ns = running - d.value;
+    if(ns < 0) return true; // Bust
+    if(ns === 1 && state.finishMode !== 'straight') return true; // Bust (kein Finish möglich)
+    if(ns === 0){
+      if(state.finishMode==='double' && !d.isDouble) return true; // Bust (kein Double)
+      if(state.finishMode==='triple' && !d.isTriple) return true; // Bust (kein Triple)
+      return true; // Checkout
+    }
+    running = ns;
+  }
+  return false;
+}
+
 function commitDart(d){
   if(state.gameOver) return;
   turnDarts.push(d);
   current = { multiplier: 1, base: null };
   setMult(1);
   renderDartsBar();
-  if(turnDarts.length >= 3){
+  if(turnDarts.length >= 3 || isX01TurnDecided()){
     submitTurn();
   }
 }
@@ -464,8 +556,6 @@ function submitTurn(){
     players: state.players.map(p=>({...p, cricket:p.cricket?{...p.cricket}:null})),
     stats: state.stats.map(s=>({...s})),
     currentPlayer: state.currentPlayer,
-    currentLeg: state.currentLeg,
-    currentSet: state.currentSet,
     shanghaiRound: state.shanghaiRound,
     gameOver: state.gameOver
   });
@@ -518,7 +608,7 @@ function handleLegWin() {
   if (player.legs >= legsToWinSet) {
     setWon = true;
     player.sets++;
-    player.legs = 0; 
+    state.players.forEach(p => p.legs = 0);
     
     const setsToWinMatch = Math.ceil(state.setsPerMatch / 2);
     if (player.sets >= setsToWinMatch) {
@@ -551,7 +641,7 @@ function processCricketTurn(player, stat){
     player.cricket[target] = after;
     if(overflow > 0 && allOthersClosed(state.currentPlayer, target)){
       const pts = overflow * target;
-      player.score += pts; stat.points += pts; scored += pts;
+      player.score += pts; scored += pts;
     }
   }
   const closedAll = CRICKET_TARGETS.every(t => player.cricket[t] >= 3);
@@ -607,8 +697,6 @@ function undo(){
   const prev = state.history.pop();
   state.players = prev.players; state.stats = prev.stats;
   state.currentPlayer = prev.currentPlayer; 
-  state.currentLeg = prev.currentLeg;
-  state.currentSet = prev.currentSet;
   state.shanghaiRound = prev.shanghaiRound;
   state.gameOver = prev.gameOver;
   
@@ -737,6 +825,15 @@ function render(){
     container.appendChild(card);
   });
 
+  // Mode-Label inkl. aktuellem Set/Leg (aus Zählern abgeleitet)
+  let label = state.modeText || '';
+  if (state.mode === 'x01' && (state.legsPerSet > 1 || state.setsPerMatch > 1) && !state.gameOver) {
+    const curSet = state.players.reduce((s,p)=>s+p.sets,0) + 1;
+    const curLeg = state.players.reduce((s,p)=>s+p.legs,0) + 1;
+    label += ` • Set ${curSet}, Leg ${curLeg}`;
+  }
+  document.getElementById('modeLabel').textContent = label;
+
   renderDartsBar(); 
   if (state.mode !== 'schanghai') updateDisplay();
   else {
@@ -749,9 +846,17 @@ function showStatus(msg, cls){
   el.classList.remove('hidden'); clearTimeout(el._t); el._t = setTimeout(()=>el.classList.add('hidden'), 3500);
 }
 function showWinner(name){
-  document.getElementById('winnerBanner').textContent = `🏆 ${name} 🏆`;
+  document.getElementById('winnerBanner').innerHTML = `
+    <div class="win-flash">🎉 WIN ! ! ! 🎉</div>
+    <div>🏆 ${name} 🏆</div>
+    <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px;">
+      <button onclick="rematch()">🔁 Revanche (gleiche Spieler)</button>
+      <button onclick="confirmNewGame()">↩ Neues Spiel</button>
+    </div>
+  `;
   document.getElementById('winnerBanner').classList.remove('hidden');
   document.getElementById('inputArea').classList.add('hidden');
+  playWinSound();
 }
 function toggleStats(){
   const panel = document.getElementById('statsPanel');
@@ -771,7 +876,8 @@ function renderStats(){
 document.addEventListener('keydown', (e) => {
   if(document.getElementById('gameScreen').classList.contains('hidden')) return;
   if(state.gameOver) return;
-  if(e.key >= '0' && e.key <= '9') pressNumber(parseInt(e.key));
+  if(e.key >= '1' && e.key <= '9') pressNumber(parseInt(e.key));
+  if(e.key === '0') enterMiss();
   if(e.key === 'Backspace') removeLastDart();
 });
 </script>
