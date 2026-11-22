@@ -63,7 +63,6 @@
   .numpad button.miss { background:#616161; }
   .numpad button.wide { grid-column:span 2; background:#455a64; }
   
-  /* Action Row angepasst: 2 Buttons statt 3 */
   .action-row { display:flex; gap:8px; margin-top: 8px; }
   .action-row button { flex:1; padding:16px; font-size:1.1em; font-weight:bold; border-radius:8px; border:none; }
   #btnClear { background:#ff9800; color:#000; }
@@ -235,7 +234,6 @@
 
       <div class="numpad" id="numpad"></div>
 
-      <!-- OK Button entfernt, nur noch Letzter & Undo -->
       <div class="action-row">
         <button id="btnClear" onclick="removeLastDart()">⌫ Letzter</button>
         <button id="btnUndo" onclick="undo()">↶ Undo Aufnahme</button>
@@ -399,7 +397,7 @@ function triggerBullAnimation() {
 
 // Kleiner synthetischer Soundeffekt für den Bull (Swoosh/Whoosh)
 function playBullSound() {
-  if (!state.voiceOn) return; // Respektiere die Stummschaltung
+  if (!state.voiceOn) return;
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -666,116 +664,4 @@ function renderDartsBar(){
       slot.innerHTML = `<div class="slot-label">Wurf ${i+1}</div><div class="slot-value">${label}</div>`;
     } else if(i === turnDarts.length){
       slot.classList.add('current');
-      slot.innerHTML = `<div class="slot-label">Wurf ${i+1}</div><div class="slot-value">▸ jetzt</div>`;
-    } else {
-      slot.innerHTML = `<div class="slot-label">Wurf ${i+1}</div><div class="slot-value">–</div>`;
-    }
-    bar.appendChild(slot);
-  }
-  const sum = turnDarts.reduce((s,d)=>s+d.value,0);
-  document.getElementById('dartsSum').textContent = turnDarts.length === 0 ? '' : `Summe: ${sum} Punkte`;
-}
-
-function render(){
-  const container = document.getElementById('playersScores'); container.innerHTML = '';
-  state.players.forEach((p, idx) => {
-    const card = document.createElement('div');
-    card.className = 'player-card' + (idx === state.currentPlayer && !state.gameOver ? ' active' : '');
-    
-    let matchScoreText = '';
-    if (state.mode === 'x01' && (state.legsPerSet > 1 || state.setsPerMatch > 1)) {
-      matchScoreText = `<div class="match-score">L: ${p.legs} | S: ${p.sets}</div>`;
-    }
-
-    if(state.mode === 'x01'){
-      let displayScore = p.score;
-      let hintText = '';
-      
-      if (idx === state.currentPlayer && turnDarts.length > 0 && !state.gameOver) {
-        let liveScore = p.score;
-        let liveBust = false;
-        for(const d of turnDarts) {
-          liveScore -= d.value;
-          if(liveScore < 0 || (liveScore === 1 && state.finishMode !== 'straight')) { liveBust = true; break; }
-        }
-        if(liveBust) {
-          displayScore = p.score + ' (Bust)';
-          hintText = 'Bust-Wurf';
-        } else {
-          displayScore = liveScore;
-          if(liveScore >= 2 && liveScore <= 170) {
-            const hint = getCheckout(liveScore, state.finishMode);
-            hintText = hint ? '✓ ' + hint.map(d => d.label).join(' + ') : '';
-          }
-        }
-      } else {
-        const hint = getCheckout(p.score, state.finishMode);
-        hintText = hint ? '✓ ' + hint.map(d => d.label).join(' + ') : '';
-      }
-
-      const isBust = typeof displayScore === 'string' && displayScore.includes('(Bust)');
-      
-      card.innerHTML = `
-        <div class="name">${p.name}${idx===state.currentPlayer&&!state.gameOver?' ▶':''}</div>
-        ${matchScoreText}
-        <div class="score" style="color:${isBust ? '#ffcdd2' : '#4fc3f7'}">${displayScore}</div>
-        <div class="hint" style="color:${isBust ? '#ffcdd2' : '#ffb74d'}">${hintText}</div>
-      `;
-    } else if (state.mode === 'cricket') {
-      let grid = '';
-      CRICKET_TARGETS.forEach(t => {
-        const m = p.cricket[t];
-        const ms = m===0?'':m===1?'/':m===2?'X':'Ⓧ';
-        grid += `<div>${t===25?'Bull':t}: <b style="color:${m>=3?'#4fc3f7':'#fff'}">${ms||'–'}</b></div>`;
-      });
-      card.innerHTML = `<div class="name">${p.name}${idx===state.currentPlayer&&!state.gameOver?' ▶':''}</div><div class="score">${p.score}</div><div class="cricket-grid">${grid}</div>`;
-    } else if (state.mode === 'schanghai') {
-      card.innerHTML = `
-        <div class="name">${p.name}${idx===state.currentPlayer&&!state.gameOver?' ▶':''}</div>
-        <div class="score">${p.shanghaiPoints}</div>
-        <div class="hint">Punkte</div>
-      `;
-    }
-    container.appendChild(card);
-  });
-
-  renderDartsBar(); 
-  if (state.mode !== 'schanghai') updateDisplay();
-  else {
-     document.getElementById('scoreDisplay').textContent = `Runde ${state.shanghaiRound}: Ziel ist die ${state.shanghaiRound} – Zahl tippen`;
-  }
-}
-
-function showStatus(msg, cls){
-  const el = document.getElementById('statusMsg'); el.textContent = msg; el.className = 'status ' + cls;
-  el.classList.remove('hidden'); clearTimeout(el._t); el._t = setTimeout(()=>el.classList.add('hidden'), 3500);
-}
-function showWinner(name){
-  document.getElementById('winnerBanner').textContent = `🏆 ${name} 🏆`;
-  document.getElementById('winnerBanner').classList.remove('hidden');
-  document.getElementById('inputArea').classList.add('hidden');
-}
-function toggleStats(){
-  const panel = document.getElementById('statsPanel');
-  if(panel.classList.contains('hidden')){ renderStats(); panel.classList.remove('hidden'); } else panel.classList.add('hidden');
-}
-function renderStats(){
-  const t = document.getElementById('statsTable');
-  let html = '<tr><th>Spieler</th><th>Darts</th><th>Ø/Dart</th><th>Ø/Aufn.</th><th>Best</th><th>100+</th><th>Busts</th></tr>';
-  state.stats.forEach((s,i) => {
-    const avgDart = s.darts ? (s.points/s.darts).toFixed(1) : '–';
-    const avgTurn = s.turns ? (s.points/s.turns).toFixed(1) : '–';
-    html += `<tr><td>${state.players[i].name}</td><td>${s.darts}</td><td>${avgDart}</td><td>${avgTurn}</td><td>${s.best}</td><td>${s.tons}</td><td>${s.busts}</td></tr>`;
-  });
-  t.innerHTML = html;
-}
-
-document.addEventListener('keydown', (e) => {
-  if(document.getElementById('gameScreen').classList.contains('hidden')) return;
-  if(state.gameOver) return;
-  if(e.key >= '0' && e.key <= '9') pressNumber(parseInt(e.key));
-  if(e.key === 'Backspace') removeLastDart();
-});
-</script>
-</body>
-</html>
+      slot.innerHTML = `<div class="slot-label">Wurf ${i+1}</div><div class="slot-value">▸ jetzt</div>
