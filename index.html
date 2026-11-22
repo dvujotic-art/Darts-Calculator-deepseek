@@ -55,7 +55,9 @@
   #btnSingle { background:#546e7a; color:#fff; }
   #btnDouble { background:#ff9800; color:#000; }
   #btnTriple { background:#e91e63; color:#fff; }
-  #btnBull { background:#7e57c2; color:#fff; }
+  #btnBullSingle { background:#7e57c2; color:#fff; }
+  #btnBullseye { background:#4a148c; color:#fff; border:2px solid #ffb74d !important; }
+  .version-tag { text-align:center; font-size:0.72em; color:#555; margin:-8px 0 10px; }
   
   .numpad { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:8px; }
   .numpad button { padding:14px 0; font-size:1.1em; font-weight:bold; border-radius:8px; border:none; background:#37474f; color:#fff; }
@@ -155,6 +157,7 @@
 <div class="screen">
   <div id="setupScreen">
     <h1>🎯 Dart Counter</h1>
+    <div class="version-tag">v3.0</div>
     
     <!-- Das Bild als Easter Egg -->
     <div class="setup-avatar">
@@ -167,7 +170,7 @@
         <label>Spielart:
           <select id="gameMode" onchange="toggleSetupFields()">
             <option value="501">501</option>
-            <option value="301">301</option>
+            <option value="301" selected>301</option>
             <option value="701">701</option>
             <option value="101">101</option>
             <option value="cricket">Cricket</option>
@@ -186,8 +189,8 @@
       <div class="row" id="tournamentSettings">
         <label>Legs pro Set (Best of):
           <select id="legsPerSet">
-            <option value="1">1 (Einzelnes Leg)</option>
-            <option value="3" selected>3</option>
+            <option value="1" selected>1 (Einzelnes Leg)</option>
+            <option value="3">3</option>
             <option value="5">5</option>
             <option value="7">7</option>
           </select>
@@ -232,7 +235,11 @@
         <button id="btnSingle" onclick="setMult(1)">Einfach</button>
         <button id="btnDouble" onclick="setMult(2)">Double</button>
         <button id="btnTriple" onclick="setMult(3)">Triple</button>
-        <button id="btnBull" onclick="setBull()">Bull</button>
+      </div>
+
+      <div class="modifier-row">
+        <button id="btnBullSingle" onclick="setBullSingle()">Single Bull (25)</button>
+        <button id="btnBullseye" onclick="setBullseye()">🎯 Bullseye (50)</button>
       </div>
 
       <div class="numpad" id="numpad"></div>
@@ -252,13 +259,13 @@ let state = {
   mode:'x01', 
   players:[], 
   currentPlayer:0, 
-  startScore:501, 
+  startScore:301, 
   finishMode:'double', 
   gameOver:false, 
   history:[], 
   stats:[], 
   voiceOn:true,
-  legsPerSet: 3,
+  legsPerSet: 1,
   setsPerMatch: 1,
   shanghaiRound: 1,
   modeText: ''
@@ -361,7 +368,16 @@ function rematch() {
 
 function mkCricket(){ const c={}; CRICKET_TARGETS.forEach(t=>c[t]=0); return c; }
 function mkStats(){ return { darts:0, points:0, turns:0, best:0, checkouts:0, busts:0, highFinish:0, tons:0 }; }
-function confirmNewGame(){ if (confirm('Neues Spiel starten?')){ document.getElementById('gameScreen').classList.add('hidden'); document.getElementById('setupScreen').classList.remove('hidden'); } }
+function confirmNewGame(){ if (confirm('Neues Spiel starten?')){ resetSetupDefaults(); document.getElementById('gameScreen').classList.add('hidden'); document.getElementById('setupScreen').classList.remove('hidden'); } }
+
+// Standard-Einstellungen: 301, Double Out, 1 Leg, kein Set
+function resetSetupDefaults(){
+  document.getElementById('gameMode').value = '301';
+  document.getElementById('finishMode').value = 'double';
+  document.getElementById('legsPerSet').value = '1';
+  document.getElementById('setsPerMatch').value = '1';
+  toggleSetupFields();
+}
 
 function buildNumpad() {
   const pad = document.getElementById('numpad'); pad.innerHTML = '';
@@ -392,15 +408,18 @@ function setMult(m){
   document.getElementById('btnSingle').classList.toggle('active', m===1);
   document.getElementById('btnDouble').classList.toggle('active', m===2);
   document.getElementById('btnTriple').classList.toggle('active', m===3);
-  document.getElementById('btnBull').classList.remove('active');
   updateDisplay();
 }
 
-function setBull(){
+function setBullSingle(){
   if(state.gameOver) return;
-  current.base = 25;
-  const mult = current.multiplier === 2 ? 2 : 1;
-  const dart = { base: 25, mult: mult, value: 25*mult, isDouble: mult===2, isTriple: false, miss: false };
+  const dart = { base: 25, mult: 1, value: 25, isDouble: false, isTriple: false, miss: false };
+  commitDart(dart);
+}
+
+function setBullseye(){
+  if(state.gameOver) return;
+  const dart = { base: 25, mult: 2, value: 50, isDouble: true, isTriple: false, miss: false };
   commitDart(dart);
   triggerBullAnimation(); 
   playBullSound();
