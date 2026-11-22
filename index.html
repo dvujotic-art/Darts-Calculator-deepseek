@@ -157,11 +157,11 @@
 <div class="screen">
   <div id="setupScreen">
     <h1>🎯 Dart Counter</h1>
-    <div class="version-tag">v3.0</div>
+    <div class="version-tag">v3.1</div>
     
     <!-- Das Bild als Easter Egg -->
     <div class="setup-avatar">
-      <img src="./mann.png" alt="Nächster Halt EHE">
+      <img src="./mann.png" alt="Nächster Halt DARTS">
       <div class="text">Nächster Halt:<br>DARTS 🎯</div>
     </div>
 
@@ -548,7 +548,7 @@ function commitDart(d){
   turnDarts.push(d);
   current = { multiplier: 1, base: null };
   setMult(1);
-  renderDartsBar();
+  render();
   if(turnDarts.length >= 3 || isX01TurnDecided()){
     submitTurn();
   }
@@ -563,7 +563,7 @@ function removeLastDart(){
   if(state.gameOver) return;
   if(turnDarts.length === 0) return;
   turnDarts.pop();
-  renderDartsBar();
+  render();
 }
 
 function submitTurn(){
