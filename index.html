@@ -63,11 +63,11 @@
   .numpad button.miss { background:#616161; }
   .numpad button.wide { grid-column:span 2; background:#455a64; }
   
-  .action-row { display:flex; gap:8px; }
+  /* Action Row angepasst: 2 Buttons statt 3 */
+  .action-row { display:flex; gap:8px; margin-top: 8px; }
   .action-row button { flex:1; padding:16px; font-size:1.1em; font-weight:bold; border-radius:8px; border:none; }
-  #btnSubmit { background:#4caf50; color:#fff; }
   #btnClear { background:#ff9800; color:#000; }
-  #btnUndo { background:#c62828; color:#fff; font-size:0.9em; }
+  #btnUndo { background:#c62828; color:#fff; }
   
   .status { text-align:center; padding:8px; font-size:1.05em; margin-top:8px; border-radius:8px; }
   .status.bust { background:#b71c1c; color:#ffcdd2; }
@@ -112,7 +112,7 @@
     line-height: 1.2;
   }
 
-  /* --- BULL ANIMATION --- */
+  /* --- BULL ANIMATION & SOUND OVERLAY --- */
   #bullOverlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -138,8 +138,8 @@
   @keyframes spinAndStop {
     0% { transform: rotate(0deg) scale(1); opacity: 0; }
     10% { opacity: 1; }
-    80% { transform: rotate(1080deg) scale(1.1); opacity: 1; } /* 3 Umdrehungen */
-    100% { transform: rotate(1080deg) scale(1.1); opacity: 1; } /* Stehen bleiben */
+    80% { transform: rotate(1080deg) scale(1.1); opacity: 1; }
+    100% { transform: rotate(1080deg) scale(1.1); opacity: 1; }
   }
 </style>
 </head>
@@ -181,7 +181,6 @@
         </label>
       </div>
       
-      <!-- Turniermodus Einstellungen (nur bei X01) -->
       <div class="row" id="tournamentSettings">
         <label>Legs pro Set (Best of):
           <select id="legsPerSet">
@@ -236,13 +235,10 @@
 
       <div class="numpad" id="numpad"></div>
 
+      <!-- OK Button entfernt, nur noch Letzter & Undo -->
       <div class="action-row">
         <button id="btnClear" onclick="removeLastDart()">⌫ Letzter</button>
-        <button id="btnSubmit" onclick="submitTurn()">OK (Aufnahme fertig)</button>
-      </div>
-
-      <div style="margin-top:8px; display:flex; gap:8px;">
-        <button id="btnUndo" onclick="undo()" style="flex:1;">↶ Undo Aufnahme</button>
+        <button id="btnUndo" onclick="undo()">↶ Undo Aufnahme</button>
       </div>
     </div>
     <div id="statusMsg" class="status hidden"></div>
@@ -269,6 +265,7 @@ let state = {
 };
 let current = { multiplier: 1, base: null };
 let turnDarts = [];
+let audioCtx = null;
 
 function addPlayerInput(name='') {
   const row = document.createElement('div');
@@ -381,25 +378,53 @@ function setBull(){
   const mult = current.multiplier === 2 ? 2 : 1;
   const dart = { base: 25, mult: mult, value: 25*mult, isDouble: mult===2, isTriple: false, miss: false };
   commitDart(dart);
-  triggerBullAnimation(); // <--- HIER WIRD DIE ANIMATION AUSGELÖST
+  triggerBullAnimation(); 
+  playBullSound();
 }
 
 function triggerBullAnimation() {
   const overlay = document.getElementById('bullOverlay');
   const img = overlay.querySelector('.spinning-newspaper');
   
-  // Overlay anzeigen
   overlay.classList.remove('hidden');
   
-  // Animation zurücksetzen (falls sie schon lief)
   img.style.animation = 'none';
   img.offsetHeight; /* trigger reflow */
   img.style.animation = null;
   
-  // Nach 3 Sekunden ausblenden (2s Animation + 1s Standbild)
   setTimeout(() => {
     overlay.classList.add('hidden');
   }, 3000);
+}
+
+// Kleiner synthetischer Soundeffekt für den Bull (Swoosh/Whoosh)
+function playBullSound() {
+  if (!state.voiceOn) return; // Respektiere die Stummschaltung
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.type = 'triangle';
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    const now = audioCtx.currentTime;
+    
+    // Tonhöhe schnell nach oben ziehen (Swoosh)
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+    
+    // Lautstärke schnell anschwellen und abklingen
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.15, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+    
+    osc.start(now);
+    osc.stop(now + 0.6);
+  } catch(e) { console.log('Audio nicht unterstützt', e); }
 }
 
 function updateDisplay(){
@@ -639,121 +664,4 @@ function renderDartsBar(){
       slot.classList.add('filled');
       const d = turnDarts[i];
       const prefix = d.mult===2?'D':d.mult===3?'T':'';
-      const label = d.miss ? 'MISS' : (d.base===25 ? (d.mult===2?'Bull':'25') : `${prefix}${d.base}`);
-      slot.innerHTML = `<div class="slot-label">Wurf ${i+1}</div><div class="slot-value">${label}</div>`;
-    } else if(i === turnDarts.length){
-      slot.classList.add('current');
-      slot.innerHTML = `<div class="slot-label">Wurf ${i+1}</div><div class="slot-value">▸ jetzt</div>`;
-    } else {
-      slot.innerHTML = `<div class="slot-label">Wurf ${i+1}</div><div class="slot-value">–</div>`;
-    }
-    bar.appendChild(slot);
-  }
-  const sum = turnDarts.reduce((s,d)=>s+d.value,0);
-  document.getElementById('dartsSum').textContent = turnDarts.length === 0 ? '' : `Summe: ${sum} Punkte`;
-}
-
-function render(){
-  const container = document.getElementById('playersScores'); container.innerHTML = '';
-  state.players.forEach((p, idx) => {
-    const card = document.createElement('div');
-    card.className = 'player-card' + (idx === state.currentPlayer && !state.gameOver ? ' active' : '');
-    
-    let matchScoreText = '';
-    if (state.mode === 'x01' && (state.legsPerSet > 1 || state.setsPerMatch > 1)) {
-      matchScoreText = `<div class="match-score">L: ${p.legs} | S: ${p.sets}</div>`;
-    }
-
-    if(state.mode === 'x01'){
-      let displayScore = p.score;
-      let hintText = '';
-      
-      if (idx === state.currentPlayer && turnDarts.length > 0 && !state.gameOver) {
-        let liveScore = p.score;
-        let liveBust = false;
-        for(const d of turnDarts) {
-          liveScore -= d.value;
-          if(liveScore < 0 || (liveScore === 1 && state.finishMode !== 'straight')) { liveBust = true; break; }
-        }
-        if(liveBust) {
-          displayScore = p.score + ' (Bust)';
-          hintText = 'Bust-Wurf';
-        } else {
-          displayScore = liveScore;
-          if(liveScore >= 2 && liveScore <= 170) {
-            const hint = getCheckout(liveScore, state.finishMode);
-            hintText = hint ? '✓ ' + hint.map(d => d.label).join(' + ') : '';
-          }
-        }
-      } else {
-        const hint = getCheckout(p.score, state.finishMode);
-        hintText = hint ? '✓ ' + hint.map(d => d.label).join(' + ') : '';
-      }
-
-      const isBust = typeof displayScore === 'string' && displayScore.includes('(Bust)');
-      
-      card.innerHTML = `
-        <div class="name">${p.name}${idx===state.currentPlayer&&!state.gameOver?' ▶':''}</div>
-        ${matchScoreText}
-        <div class="score" style="color:${isBust ? '#ffcdd2' : '#4fc3f7'}">${displayScore}</div>
-        <div class="hint" style="color:${isBust ? '#ffcdd2' : '#ffb74d'}">${hintText}</div>
-      `;
-    } else if (state.mode === 'cricket') {
-      let grid = '';
-      CRICKET_TARGETS.forEach(t => {
-        const m = p.cricket[t];
-        const ms = m===0?'':m===1?'/':m===2?'X':'Ⓧ';
-        grid += `<div>${t===25?'Bull':t}: <b style="color:${m>=3?'#4fc3f7':'#fff'}">${ms||'–'}</b></div>`;
-      });
-      card.innerHTML = `<div class="name">${p.name}${idx===state.currentPlayer&&!state.gameOver?' ▶':''}</div><div class="score">${p.score}</div><div class="cricket-grid">${grid}</div>`;
-    } else if (state.mode === 'schanghai') {
-      card.innerHTML = `
-        <div class="name">${p.name}${idx===state.currentPlayer&&!state.gameOver?' ▶':''}</div>
-        <div class="score">${p.shanghaiPoints}</div>
-        <div class="hint">Punkte</div>
-      `;
-    }
-    container.appendChild(card);
-  });
-
-  renderDartsBar(); 
-  if (state.mode !== 'schanghai') updateDisplay();
-  else {
-     document.getElementById('scoreDisplay').textContent = `Runde ${state.shanghaiRound}: Ziel ist die ${state.shanghaiRound} – Zahl tippen`;
-  }
-}
-
-function showStatus(msg, cls){
-  const el = document.getElementById('statusMsg'); el.textContent = msg; el.className = 'status ' + cls;
-  el.classList.remove('hidden'); clearTimeout(el._t); el._t = setTimeout(()=>el.classList.add('hidden'), 3500);
-}
-function showWinner(name){
-  document.getElementById('winnerBanner').textContent = `🏆 ${name} 🏆`;
-  document.getElementById('winnerBanner').classList.remove('hidden');
-  document.getElementById('inputArea').classList.add('hidden');
-}
-function toggleStats(){
-  const panel = document.getElementById('statsPanel');
-  if(panel.classList.contains('hidden')){ renderStats(); panel.classList.remove('hidden'); } else panel.classList.add('hidden');
-}
-function renderStats(){
-  const t = document.getElementById('statsTable');
-  let html = '<tr><th>Spieler</th><th>Darts</th><th>Ø/Dart</th><th>Ø/Aufn.</th><th>Best</th><th>100+</th><th>Busts</th></tr>';
-  state.stats.forEach((s,i) => {
-    const avgDart = s.darts ? (s.points/s.darts).toFixed(1) : '–';
-    const avgTurn = s.turns ? (s.points/s.turns).toFixed(1) : '–';
-    html += `<tr><td>${state.players[i].name}</td><td>${s.darts}</td><td>${avgDart}</td><td>${avgTurn}</td><td>${s.best}</td><td>${s.tons}</td><td>${s.busts}</td></tr>`;
-  });
-  t.innerHTML = html;
-}
-
-document.addEventListener('keydown', (e) => {
-  if(document.getElementById('gameScreen').classList.contains('hidden')) return;
-  if(state.gameOver) return;
-  if(e.key >= '0' && e.key <= '9') pressNumber(parseInt(e.key));
-  if(e.key === 'Enter') submitTurn();
-  if(e.key === 'Backspace') removeLastDart();
-});
-</script>
-</body>
-</html>
+      const label = d.miss ? 'MISS
